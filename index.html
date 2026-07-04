@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk Radar - Day One | Cyera PM Exercise</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0C111B; --panel:#131A28; --panel2:#1A2334; --panel3:#212C42;
+  --line:rgba(148,166,196,.14); --line2:rgba(148,166,196,.26);
+  --ink:#E9EEF6; --dim:#8D99AD; --faint:#5E6A80;
+  --teal:#34D9C3; --amber:#F5A623; --red:#FF5A65; --violet:#9B8CFF; --green:#43D17C; --blue:#5EA8FF;
+  --teal-bg:rgba(52,217,195,.12); --amber-bg:rgba(245,166,35,.12);
+  --red-bg:rgba(255,90,101,.12); --violet-bg:rgba(155,140,255,.14); --green-bg:rgba(67,209,124,.12); --blue-bg:rgba(94,168,255,.12);
+  --disp:'Space Grotesk',sans-serif; --body:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;min-height:100vh}
+::selection{background:rgba(52,217,195,.3)}
+
+.topbar{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand .co{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.16em;color:var(--dim)}
+.brand .prod{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:.01em}
+.brand .prod b{color:var(--teal);font-weight:600}
+.cust{font-size:12.5px;color:var(--dim);border-left:1px solid var(--line2);padding-left:16px}
+.cust b{color:var(--ink);font-weight:600}
+.scanchip{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:8px}
+.scanchip .pulse{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pu 2s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px}
+.tab{border:0;background:transparent;color:var(--dim);font-family:var(--body);font-weight:600;font-size:13px;padding:7px 16px;border-radius:7px;cursor:pointer;transition:.15s}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--panel3);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tab:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.priors{display:flex;gap:10px;align-items:center;padding:9px 22px;border-bottom:1px solid var(--line);font-size:12px;color:var(--dim);flex-wrap:wrap;background:rgba(19,26,40,.6)}
+.priors .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint)}
+.pchip{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 10px;color:var(--dim)}
+.pchip b{color:var(--ink);font-weight:600}
+.pchip.v{border-color:rgba(155,140,255,.4);color:var(--violet)}
+
+.timeline{padding:20px 26px 10px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(26,35,52,.5),transparent)}
+.tl-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.tl-title{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.02em;color:var(--dim)}
+.tl-title b{color:var(--ink)}
+.tl-now{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--teal)}
+.tl-now small{font-size:12px;color:var(--dim);font-weight:400;margin-left:8px}
+.track{position:relative;height:44px}
+.rail{position:absolute;top:10px;left:0;right:0;height:4px;background:var(--panel3);border-radius:2px}
+.rail-fill{position:absolute;top:10px;left:0;height:4px;background:linear-gradient(90deg,var(--teal),rgba(52,217,195,.5));border-radius:2px;transition:width .3s}
+.stop{position:absolute;top:0;transform:translateX(-50%);cursor:pointer;background:none;border:0;padding:0;width:70px}
+.stop .dot{width:14px;height:14px;border-radius:50%;background:var(--panel3);border:2px solid var(--faint);margin:4px auto 6px;transition:.2s}
+.stop.passed .dot{background:var(--teal);border-color:var(--teal)}
+.stop.cur .dot{background:var(--teal);border-color:#fff;box-shadow:0 0 0 5px rgba(52,217,195,.2)}
+.stop .lb{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;display:block}
+.stop.cur .lb,.stop.passed .lb{color:var(--teal)}
+.stop .sub{font-size:9.5px;color:var(--faint);text-align:center;display:block;margin-top:1px}
+
+.diff{padding:8px 22px;font-size:12.5px;color:var(--dim);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;background:rgba(12,17,27,.8)}
+.diff .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--faint);flex-shrink:0}
+.diff .up{color:var(--red)} .diff .dn{color:var(--green)}
+
+.main{display:grid;grid-template-columns:minmax(430px,1fr) minmax(430px,1.15fr);gap:18px;padding:18px 22px;max-width:1440px;margin:0 auto}
+.main.solo{display:block;max-width:900px}
+@media(max-width:980px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.card h2{font-family:var(--disp);font-size:15px;font-weight:600;letter-spacing:.02em;margin-bottom:4px}
+.card .sub{font-size:12px;color:var(--dim);margin-bottom:14px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.main.solo .card{margin-bottom:18px}
+
+/* collapsible sections */
+.sechead{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.sechead h2{margin-bottom:0;flex:1}
+.sechead .summ{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.caret{font-size:11px;color:var(--faint);transition:transform .2s;width:14px;text-align:center}
+.caret.open{transform:rotate(90deg)}
+.secbody{margin-top:12px}
+
+.radar-wrap{display:flex;justify-content:center;padding:6px 0 2px}
+svg.radar{width:100%;max-width:480px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;font-size:11.5px;color:var(--dim);margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block}
+.sw.fz{background:var(--amber);opacity:.45;box-shadow:0 0 5px var(--amber)}
+.sw.sh{background:var(--red)}
+.sw.ai{background:transparent;border:2px solid var(--violet);width:8px;height:8px}
+.sw.dg{background:var(--green);width:7px;height:7px}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:560px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.metric .v{font-family:var(--mono);font-size:20px;font-weight:600}
+.metric .l{font-size:10.5px;color:var(--dim);margin-top:2px;letter-spacing:.03em}
+.metric.t .v{color:var(--teal)} .metric.r .v{color:var(--red)} .metric.a .v{color:var(--amber)}
+
+.cov-row{margin-bottom:11px}
+.cov-row .cl{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px}
+.cov-row .cl b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.cbar{height:8px;background:var(--panel3);border-radius:4px;overflow:hidden}
+.cbar i{display:block;height:100%;border-radius:4px;transition:width .5s}
+.cbar.t0 i{background:var(--teal)} .cbar.t1 i{background:var(--amber)} .cbar.t2 i{background:var(--violet)}
+
+/* severity filter */
+.sevbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sevbtn{border:1px solid var(--line2);background:var(--panel3);color:var(--dim);font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;padding:4px 11px;border-radius:14px;cursor:pointer}
+.sevbtn.on{color:var(--ink);border-color:var(--teal);background:var(--teal-bg)}
+.sevbtn.c.on{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+.sevbtn.h.on{color:var(--amber);border-color:var(--amber);background:var(--amber-bg)}
+.sevbtn.m.on{color:var(--blue);border-color:var(--blue);background:var(--blue-bg)}
+.sevbtn.l.on{color:var(--dim);border-color:var(--line2);background:var(--panel3)}
+
+.alert{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:var(--panel2);transition:border-color .3s;overflow:hidden}
+.alert.crit{border-left:3px solid var(--red)}
+.alert.high{border-left:3px solid var(--amber)}
+.alert.med{border-left:3px solid var(--blue)}
+.alert.down{border-left:3px solid var(--green);opacity:.85}
+.a-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:13px 16px;cursor:pointer;user-select:none}
+.a-head:hover{background:rgba(33,44,66,.4)}
+.a-body{padding:0 16px 13px}
+.badge{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;padding:3px 8px;border-radius:5px}
+.badge.crit{background:var(--red-bg);color:var(--red)}
+.badge.high{background:var(--amber-bg);color:var(--amber)}
+.badge.med{background:var(--blue-bg);color:var(--blue)}
+.badge.down{background:var(--green-bg);color:var(--green)}
+.badge.exp{background:var(--violet-bg);color:var(--violet)}
+.badge.dc{background:var(--panel3);color:var(--ink);letter-spacing:.05em}
+.a-title{font-family:var(--mono);font-size:13px;font-weight:500}
+.a-state{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dim);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.a-state .ok{color:var(--teal);font-weight:600}
+.a-state .vg{color:var(--amber)}
+.env{font-size:10.5px;color:var(--dim);background:var(--panel3);border-radius:5px;padding:2px 8px}
+.stage{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px dashed var(--line)}
+.stage .sd{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.stage.s1 .sd{background:var(--amber)}
+.stage.s2 .sd{background:var(--red)}
+.stage.sg .sd{background:var(--green)}
+.stage .tx{font-size:12.5px;color:var(--ink);flex:1}
+.stage .tx .st{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--dim);display:block;margin-bottom:1px}
+.stage .tm{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
+.stage .tm.ttvr{color:var(--teal);font-weight:600;cursor:help}
+.verifying{display:flex;gap:9px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:12px;color:var(--amber)}
+.spin{width:11px;height:11px;border:2px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.a-foot{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.aiflag{font-size:10.5px;color:var(--violet);border:1px solid rgba(155,140,255,.4);border-radius:5px;padding:2px 8px}
+.btn{border:1px solid var(--line2);background:var(--panel3);color:var(--ink);font-family:var(--body);font-size:11.5px;font-weight:500;padding:5px 12px;border-radius:7px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.ghost{background:transparent}
+
+.qrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--line);font-size:12px}
+.qrow:first-child{border-top:0}
+.qname{font-family:var(--mono);font-size:11.5px;flex:1;min-width:120px}
+.qexp{color:var(--dim);font-size:10.5px;min-width:95px}
+.ci{width:100px;height:7px;background:var(--panel3);border-radius:4px;position:relative;flex-shrink:0}
+.ci i{position:absolute;top:0;height:100%;background:linear-gradient(90deg,rgba(245,166,35,.4),var(--amber));border-radius:4px}
+.qbtn{border:0;background:transparent;color:var(--dim);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:5px}
+.qbtn:hover{color:var(--teal);background:var(--panel3)}
+
+/* CISO */
+.daybox{border:1px solid rgba(52,217,195,.4);background:var(--teal-bg);border-radius:14px;padding:16px 20px;margin-bottom:18px}
+.daybox .dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--teal);margin-bottom:8px}
+.daybox .dl{font-size:13.5px;color:var(--ink)}
+.daybox .dl b{color:var(--teal)}
+.decision{border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:12px;background:var(--panel2);padding:14px 16px;margin-bottom:12px}
+.decision .dhead{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.decision .num{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600}
+.decision h3{font-family:var(--disp);font-size:14px;font-weight:600;flex:1;min-width:200px}
+.decision .ev{font-size:12px;color:var(--dim);margin-top:6px}
+.decision .meta{display:flex;gap:14px;margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--dim);flex-wrap:wrap}
+.decision .meta .ttvr{color:var(--teal);font-weight:600;cursor:help}
+.decision .meta .blast{color:var(--red)}
+.morebtn{border:1px dashed var(--line2);background:transparent;color:var(--dim);font-family:var(--body);font-size:12px;padding:8px;border-radius:9px;cursor:pointer;width:100%}
+.morebtn:hover{color:var(--teal);border-color:var(--teal)}
+.hyp{display:flex;gap:10px;align-items:flex-start;padding:11px 4px;border-top:1px solid var(--line)}
+.hyp:first-of-type{border-top:0}
+.hchip{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.1em;padding:3px 8px;border-radius:5px;flex-shrink:0;margin-top:2px}
+.hchip.pend{background:var(--panel3);color:var(--dim)}
+.hchip.conf{background:var(--red-bg);color:var(--red)}
+.hchip.down{background:var(--green-bg);color:var(--green)}
+.hyp .ht{font-size:12.5px;flex:1}
+.hyp .ht small{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+.hyp .htm{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap}
+.snapbar{display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap}
+.snapbtn{border:1px solid var(--teal);background:var(--teal-bg);color:var(--teal);font-weight:600;font-size:12.5px;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--body)}
+.snapbtn:hover{background:rgba(52,217,195,.2)}
+.snapnote{font-size:11.5px;color:var(--dim)}
+.snapbanner{display:none;margin-top:10px;border:1px solid rgba(52,217,195,.4);background:var(--teal-bg);border-radius:9px;padding:9px 14px;font-size:12px;color:var(--teal);font-family:var(--mono)}
+.ttvr-plot{position:relative;height:64px;margin-top:8px;border-bottom:1px solid var(--line2)}
+.ttvr-plot .pt{position:absolute;bottom:14px;width:9px;height:9px;border-radius:50%;background:var(--red);transform:translateX(-50%)}
+.ttvr-plot .pt.hi{background:var(--amber)}
+.ttvr-plot .med{position:absolute;bottom:0;top:0;width:2px;background:var(--teal);transform:translateX(-50%)}
+.ttvr-plot .medlb{position:absolute;top:-4px;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--teal);white-space:nowrap}
+.ttvr-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:3px}
+.empty{border:1px dashed var(--line2);border-radius:11px;padding:20px;text-align:center;color:var(--dim);font-size:13px}
+.empty b{color:var(--ink)}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel3);border:1px solid var(--teal);color:var(--ink);padding:11px 18px;border-radius:10px;font-size:12.5px;transition:transform .25s;z-index:50;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast .tk{color:var(--teal);font-weight:600}
+
+.footer{padding:14px 22px 26px;text-align:center;font-size:11px;color:var(--faint)}
+@media(prefers-reduced-motion:reduce){.sweep,.spin,.pulse{animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="co">CYERA</span><span class="prod">Risk <b>Radar</b></span></div>
+  <div class="cust">Customer: <b>Meridian Financial</b> · 350,412 data stores · Deployed today 08:00</div>
+  <div class="scanchip"><span class="pulse"></span>Full scan: day 1 of 14 - running underneath</div>
+  <div class="tabs">
+    <button class="tab on" id="tabA" onclick="setView('analyst')">Analyst Workbench</button>
+    <button class="tab" id="tabC" onclick="setView('ciso')">CISO - Day 1 Report</button>
+  </div>
+</div>
+
+<div class="priors">
+  <span class="lbl">PRIORS SEEDED T+0:00</span>
+  <span class="pchip"><b>5</b> focus areas (onboarding)</span>
+  <span class="pchip">Cross-customer intel: <b>hundreds</b> of comparable environments</span>
+  <span class="pchip">Incumbent import: <b>12,480</b> Purview labels</span>
+  <span class="pchip v">AI-reachability map: 3 MCP · 2 copilots · 1 self-hosted LLM</span>
+</div>
+
+<div class="timeline">
+  <div class="tl-head">
+    <div class="tl-title">Day one - <b>drag through the first 24 hours</b></div>
+    <div class="tl-now" id="tlNow">T+1:00<small id="tlSub"></small></div>
+  </div>
+  <div class="track" id="track">
+    <div class="rail"></div>
+    <div class="rail-fill" id="railFill"></div>
+  </div>
+</div>
+
+<div class="diff" id="diffStrip"><span class="k">SINCE LAST LOOK</span><span id="diffTx"></span></div>
+
+<div class="main" id="main"></div>
+
+<div id="toast"></div>
+<div class="footer">Interactive mock - Cyera PM take-home exercise · Ofer Baratz · Simulated data</div>
+
+<script>
+/* ================= DATA ================= */
+const KEY=[0,1,3,8,24];
+const TOTAL=350412;
+const TTVRDEF='TTVR = time-to-validated-risk: elapsed time from deployment to this risk being validated with evidence';
+const fm=n=>n.toLocaleString('en-US');
+const th=h=>{const H=Math.floor(h),M=Math.round((h-H)*60);return 'T+'+H+':'+String(M).padStart(2,'0')};
+
+const METRICS={
+  tier0:[12,68,100,100,100],
+  sampled:[0,1400,7400,20600,38200],
+  scanned:[0,700,3150,9100,24900],
+  validated:[0,1,2,9,14],
+  decisions:[0,1,1,4,5],
+  median:['-','0:47','1:26','3:48','3:12']
+};
+
+const DIFFS=[
+ '<span>Baseline seeded - cross-customer intel, Purview import (12,480 labels), 5 focus areas registered. Tier 0 triage started on all 350,412 data stores.</span>',
+ '<span><span class="up">▲ 1 escalation</span> (real-time) - <b>mf-prod-cust-export</b> validated CRITICAL at <b>T+0:47</b>. Tier 0 at 68%.</span>',
+ '<span><span class="up">▲ 1 new exposure fact</span> - SharePoint <b>/ma-diligence</b> (copilot-indexed). Tier 0 complete: 350,412 / 350,412 data stores triaged.</span>',
+ '<span><span class="up">▲ 3 escalations</span> · <span class="dn">▼ 1 downgrade</span> batched at 08:00 with evidence - Oracle CRM: no PII above 0.5% density (90% conf). Full verification ETA day 6.</span>',
+ '<span><span class="up">▲ 2 escalations</span> (1 found by exploration budget) · <span class="dn">▼ 1 downgrade</span> batched 20:00 · <b>Day 1 Report frozen &amp; citable.</b></span>'
+];
+
+/* sev: crit | high | med | down */
+const ALERTS=[
+ {id:'a1',sev:'crit',title:'s3://mf-prod-cust-export',env:'AWS · S3',dc:'PII',
+  s1:{t:0.47,tx:'Public bucket, unencrypted · reachable by 2 external principals + 1 MCP connector'},
+  s2:{t:0.78,tx:'PII confirmed in stratified sample - 96% confidence · est. 1.2M–2.1M customer records',ttvr:'TTVR 0:47'},
+  ai:'MCP-reachable',eta:'ETA 20 min'},
+ {id:'a2',sev:'crit',title:'snowflake://FIN_ANALYTICS (share)',env:'DBaaS · Snowflake',dc:'PCI',
+  s1:{t:1.7,tx:'Data share exposed to 60 external principals incl. 14 contractor accounts'},
+  s2:{t:4.92,tx:'PCI-adjacent data confirmed - 93% confidence · card-metadata + account linkage',ttvr:'TTVR 4:55'},
+  ai:null,eta:'ETA ~3 h (queued #2)'},
+ {id:'a3',sev:'crit',title:'sharepoint://sites/ma-diligence',env:'SaaS · M365',dc:'M&A DOCS',
+  s1:{t:2.83,tx:'Org-wide sharing link active · indexed by Microsoft Copilot'},
+  s2:{t:6.67,tx:'M&A documents confirmed - 91% confidence · deal names + valuation models in sample',ttvr:'TTVR 6:40'},
+  ai:'Copilot-indexed',eta:'ETA ~4 h (queued #4)'},
+ {id:'a4',sev:'high',title:'azblob://hr-payroll-archive',env:'Azure · Blob',dc:'PAYROLL PII',
+  s1:{t:5.17,tx:'Unencrypted archive · readable by 3 over-broad service principals'},
+  s2:{t:7.5,tx:'Payroll PII confirmed - 95% confidence · est. 38K–52K employee records',ttvr:'TTVR 7:30'},
+  ai:null,eta:'ETA ~2 h'},
+ {id:'a5',sev:'crit',title:'gs://etl-tmp-2019',env:'GCP · GCS',dc:'CREDENTIALS',explore:true,
+  s1:{t:13.33,tx:'Stale bucket, innocent metadata - selected by exploration budget · untouched 26 months'},
+  s2:{t:14.08,tx:'Live credentials confirmed - 97% confidence · 23 active keys incl. 2 admin tokens',ttvr:'TTVR 14:05'},
+  ai:null,eta:'ETA 25 min'},
+ {id:'a6',sev:'med',title:'gdrive://Finance/Q2-close',env:'SaaS · Google Drive',dc:'FINANCE',
+  s1:{t:3.9,tx:'Org-wide sharing link · finance folder, 1.8K files'},
+  s2:{t:21.5,tx:'Internal financials confirmed - 88% confidence · no customer or payment data in sample',ttvr:'TTVR 21:30'},
+  ai:null,eta:'ETA tonight (queued #11)'},
+ {id:'a7',sev:'down',title:'oracle://crm-legacy-01',env:'On-prem · Oracle',dc:null,hyp:true,
+  s1:{t:0.9,tx:'Focus area #3 - customer feared legacy CRM exposure · prioritized for early sampling'},
+  sg:{t:8.17,tx:'Downgraded - no sensitive data above 0.5% density (90% confidence). Full verification ETA day 6.',ttvr:'T+8:10'},
+  ai:null,eta:'sampling…'}
+];
+
+const QUEUE=[
+ {n:'s3://mf-datalake-raw',lo:62,hi:81,exp:'internal-broad · 1.1K principals',ps:'high'},
+ {n:'rds://mf-claims-prod',lo:71,hi:88,exp:'214 principals · no rotation',ps:'high'},
+ {n:'azblob://legal-hold-2021',lo:44,hi:69,exp:'1 external guest',ps:'med'},
+ {n:'sharepoint://sites/it-runbooks',lo:12,hi:34,exp:'internal only',ps:'low'},
+ {n:'gs://etl-tmp-2019',lo:8,hi:31,exp:'stale 26 mo',ps:'low',explore:true,hideAfter:13.3}
+];
+
+const HYPS=[
+ {q:'Customer PII sits in prod export buckets',res:0.78,st:'conf',ev:'Confirmed via s3://mf-prod-cust-export - 96% conf, recommended action attached'},
+ {q:'Contractors can reach finance data shares',res:4.92,st:'conf',ev:'Confirmed via Snowflake FIN_ANALYTICS - 60 external principals'},
+ {q:'M&A documents are reachable by AI copilots',res:6.67,st:'conf',ev:'Confirmed - /ma-diligence indexed by Copilot, org-wide link'},
+ {q:'Legacy Oracle CRM is exposed',res:8.17,st:'down',ev:'Downgraded - no PII >0.5% density (90% conf) · full verify ETA day 6'},
+ {q:'PCI data lives in dev environments',res:19.5,st:'down',ev:'Downgraded - 0/312 sampled dev stores above threshold · verify ETA day 9'}
+];
+
+const DECISIONS=[
+ {t:0.78,ttvr:'0:47',h:'Revoke public access & disconnect MCP connector on mf-prod-cust-export',
+  ev:'PII confirmed in sample (96% conf). Public + unencrypted + 2 external principals + 1 MCP connector.',blast:'1.2–2.1M customer records'},
+ {t:4.92,ttvr:'4:55',h:'Restrict Snowflake FIN_ANALYTICS share to 4 named principals',
+  ev:'PCI-adjacent data confirmed (93% conf). Currently exposed to 60 external identities incl. contractors.',blast:'~60 external identities'},
+ {t:6.67,ttvr:'6:40',h:'Exclude /ma-diligence from Copilot indexing & kill org-wide link',
+  ev:'M&A deal documents confirmed (91% conf). Reachable by every Copilot user in the tenant.',blast:'Deal names + valuation models'},
+ {t:7.5,ttvr:'7:30',h:'Re-encrypt hr-payroll-archive & scope 3 service principals',
+  ev:'Payroll PII confirmed (95% conf). Unencrypted, over-broad service access.',blast:'38–52K employee records'},
+ {t:14.08,ttvr:'14:05',h:'Rotate 23 live credentials found in gs://etl-tmp-2019, then delete bucket',
+  ev:'Found by exploration budget - innocent metadata, stale 26 months. 2 admin tokens still active.',blast:'2 admin tokens · lateral-movement risk'}
+];
+
+const BLIPS=[
+ {env:0,f:.58,r:278,sz:13,sev:'crit',t0:.4,tv:.78,ai:true,lb:'mf-prod-cust-export'},
+ {env:3,f:.28,r:238,sz:11,sev:'crit',t0:1.7,tv:4.92,lb:'FIN_ANALYTICS share'},
+ {env:3,f:.68,r:250,sz:11,sev:'crit',t0:2.83,tv:6.67,ai:true,lb:'/ma-diligence'},
+ {env:1,f:.5,r:198,sz:10,sev:'high',t0:5.17,tv:7.5,lb:'hr-payroll-archive'},
+ {env:2,f:.45,r:150,sz:9,sev:'crit',t0:13.33,tv:14.08,lb:'etl-tmp-2019 (exploration)'},
+ {env:4,f:.5,r:168,sz:10,sev:'high',t0:.9,dg:8.17,lb:'oracle crm-legacy (downgraded)'},
+ {env:0,f:.2,r:205,sz:8,sev:'high',t0:1.2,lb:'mf-datalake-raw (est.)'},
+ {env:0,f:.8,r:160,sz:7,sev:'high',t0:1.6,lb:'rds claims-prod (est.)'},
+ {env:0,f:.38,r:120,sz:6,sev:'high',t0:2.1,lb:'est.'},
+ {env:1,f:.25,r:140,sz:6,sev:'high',t0:2.3,lb:'est.'},
+ {env:1,f:.72,r:225,sz:7,sev:'high',t0:2.6,dg:20,lb:'est. → downgraded'},
+ {env:3,f:.5,r:180,sz:7,sev:'high',t0:2.0,tv:21.5,lb:'gdrive Q2-close'},
+ {env:3,f:.85,r:130,sz:6,sev:'high',t0:2.7,lb:'est.'},
+ {env:2,f:.7,r:200,sz:6,sev:'high',t0:2.4,lb:'est.'},
+ {env:4,f:.25,r:110,sz:6,sev:'high',t0:2.9,lb:'est.'},
+ {env:4,f:.75,r:145,sz:6,sev:'high',t0:2.5,dg:19.5,lb:'pci-dev focus area → downgraded'}
+];
+const ENVS=[{n:'AWS',s:'198K'},{n:'Azure',s:'61K'},{n:'GCP',s:'22K'},{n:'SaaS',s:'41K'},{n:'On-prem',s:'28K'}];
+const FLEET=[.11,.06,.04,.09,.05];
+
+/* ================= STATE ================= */
+let hi=1;
+let view='analyst';
+let sevFilter='all';
+let openAlerts=null;   // Set of alert ids user opened/closed; null = default logic
+let userToggled={};    // id -> bool (open)
+let secOpen={actions:true,focus:false,coverage:false};
+let showAllActions=false;
+
+/* ================= TIMELINE ================= */
+const track=document.getElementById('track');
+const SUBS=['onboarding done','first validation','Tier 0 complete','mid-day picture','Day 1 Report'];
+function buildTimeline(){
+  KEY.forEach((h,i)=>{
+    const b=document.createElement('button');
+    b.className='stop';b.style.left=(i/(KEY.length-1)*100)+'%';
+    b.innerHTML='<span class="dot"></span><span class="lb">H'+h+'</span><span class="sub">'+SUBS[i]+'</span>';
+    b.setAttribute('aria-label','Jump to hour '+h);
+    b.onclick=()=>{hi=i;render()};
+    track.appendChild(b);
+  });
+}
+function paintTimeline(){
+  document.querySelectorAll('.stop').forEach((s,i)=>{
+    s.classList.toggle('cur',i===hi);
+    s.classList.toggle('passed',i<hi);
+  });
+  document.getElementById('railFill').style.width=(hi/(KEY.length-1)*100)+'%';
+  document.getElementById('tlNow').innerHTML='T+'+KEY[hi]+':00<small id="tlSub">'+SUBS[hi]+'</small>';
+  document.getElementById('diffTx').innerHTML=DIFFS[hi];
+}
+
+/* ================= RADAR SVG ================= */
+function polar(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+function sectorPath(cx,cy,r,a0,a1){
+  const [x0,y0]=polar(cx,cy,r,a0),[x1,y1]=polar(cx,cy,r,a1);
+  return `M${cx},${cy} L${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1} Z`;
+}
+function radarSVG(h){
+  const C=250,R=240;let s='';
+  ENVS.forEach((e,i)=>{
+    s+=`<path d="${sectorPath(C,C,R,i*72,(i+1)*72)}" fill="rgba(52,217,195,${FLEET[i]*0.9})" stroke="none"/>`;
+  });
+  [70,130,190,240].forEach((r,i)=>{
+    s+=`<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="rgba(148,166,196,.16)" stroke-width="1" ${i<3?'stroke-dasharray="3 4"':''}/>`;
+  });
+  ENVS.forEach((e,i)=>{
+    const [x,y]=polar(C,C,R,i*72);
+    s+=`<line x1="${C}" y1="${C}" x2="${x}" y2="${y}" stroke="rgba(148,166,196,.16)"/>`;
+    const [lx,ly]=polar(C,C,R-16,(i+.5)*72);
+    s+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8D99AD">${e.n}</text>`;
+    const [sx,sy]=polar(C,C,R-30,(i+.5)*72);
+    s+=`<text x="${sx}" y="${sy}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#5E6A80">${e.s}</text>`;
+  });
+  s+=`<text x="${C}" y="${C-58}" text-anchor="middle" font-size="7.5" font-family="IBM Plex Mono" fill="#5E6A80">PRIVATE CORE</text>`;
+  s+=`<text x="${C}" y="${C-228}" text-anchor="middle" font-size="7.5" font-family="IBM Plex Mono" fill="#5E6A80">PUBLIC / AI-REACHABLE EDGE</text>`;
+  s+=`<g class="sweep" style="transform-origin:${C}px ${C}px;animation:swp 5s linear infinite">
+       <path d="${sectorPath(C,C,R,0,24)}" fill="url(#swg)"/></g>`;
+  BLIPS.forEach(b=>{
+    if(h<b.t0)return;
+    const ang=(b.env+b.f)*72;
+    const [x,y]=polar(C,C,b.r,ang);
+    const col=b.sev==='crit'?'#FF5A65':'#F5A623';
+    if(b.dg&&h>=b.dg){
+      s+=`<circle cx="${x}" cy="${y}" r="4.5" fill="#43D17C" opacity=".8"><title>${b.lb}</title></circle>`;
+      return;
+    }
+    if(b.tv&&h>=b.tv){
+      s+=`<g><circle cx="${x}" cy="${y}" r="${b.sz+5}" fill="${col}" opacity=".14"/>
+          <circle cx="${x}" cy="${y}" r="${b.sz}" fill="${col}" opacity=".95"/>
+          ${b.ai?`<circle cx="${x}" cy="${y}" r="${b.sz+7}" fill="none" stroke="#9B8CFF" stroke-width="1.6"/>`:''}
+          <title>${b.lb} - validated</title></g>`;
+    }else{
+      s+=`<g><circle cx="${x}" cy="${y}" r="${b.sz}" fill="${col}" opacity=".38" filter="url(#fz)"/>
+          <circle cx="${x}" cy="${y}" r="${b.sz+4}" fill="none" stroke="${col}" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>
+          ${b.ai?`<circle cx="${x}" cy="${y}" r="${b.sz+8}" fill="none" stroke="#9B8CFF" stroke-width="1.3" stroke-dasharray="2 3" opacity=".7"/>`:''}
+          <title>${b.lb} - estimated (pending sampling)</title></g>`;
+    }
+  });
+  return `<svg class="radar" viewBox="0 0 500 500" role="img" aria-label="Risk radar: environments by sector, exposure by radius">
+    <defs>
+      <filter id="fz"><feGaussianBlur stdDeviation="3"/></filter>
+      <linearGradient id="swg"><stop offset="0%" stop-color="rgba(52,217,195,0)"/><stop offset="100%" stop-color="rgba(52,217,195,.18)"/></linearGradient>
+    </defs>
+    <style>@keyframes swp{to{transform:rotate(360deg)}}</style>
+    ${s}</svg>`;
+}
+
+/* ================= SHARED ================= */
+function metricsHTML(){
+  const i=hi;
+  return `<div class="metrics">
+    <div class="metric r"><div class="v">${METRICS.validated[i]}</div><div class="l">validated risks</div></div>
+    <div class="metric t"><div class="v">${METRICS.decisions[i]}</div><div class="l">recommended actions</div></div>
+    <div class="metric t" title="${TTVRDEF}"><div class="v">${METRICS.median[i]}</div><div class="l">median TTVR · time-to-validated-risk</div></div>
+    <div class="metric a"><div class="v">${METRICS.tier0[i]}%</div><div class="l">of 350K data stores triaged (Tier 0)</div></div>
+  </div>`;
+}
+function coverageRows(){
+  const i=hi;
+  const p1=(METRICS.sampled[i]/TOTAL*100), p2=(METRICS.scanned[i]/TOTAL*100);
+  return `
+    <div class="cov-row"><div class="cl"><span>Tier 0 - metadata triage (all signals, incl. AI-reachability)</span><b>${METRICS.tier0[i]}%</b></div><div class="cbar t0"><i style="width:${METRICS.tier0[i]}%"></i></div></div>
+    <div class="cov-row"><div class="cl"><span>Tier 1 - statistical sampling (estimates ± confidence intervals)</span><b>${fm(METRICS.sampled[i])} stores · ${p1.toFixed(1)}%</b></div><div class="cbar t1"><i style="width:${Math.max(p1,p1>0?1.5:0)}%"></i></div></div>
+    <div class="cov-row" style="margin-bottom:2px"><div class="cl"><span>Tier 2 - full-fidelity scan (day 1 of 14)</span><b>${fm(METRICS.scanned[i])} stores · ${p2.toFixed(1)}%</b></div><div class="cbar t2"><i style="width:${Math.max(p2,p2>0?1:0)}%"></i></div></div>`;
+}
+
+/* ================= ALERTS (analyst) ================= */
+function alertState(a,h){
+  if(a.sg) return h>=a.sg.t ? '<span class="ok">resolved · downgraded</span>' : '<span class="vg">sampling…</span>';
+  if(a.s2 && h>=a.s2.t) return `<span class="ok" title="${TTVRDEF}">validated ✓ ${a.s2.ttvr}</span>`;
+  return `<span class="vg">verifying · ${a.eta}</span>`;
+}
+function isOpen(a,h){
+  if(a.id in userToggled) return userToggled[a.id];
+  if(a.sev==='crit' && !(a.s2&&h>=a.s2.t)) return true;   // unresolved criticals open
+  if(a.sev==='crit' && a.s2 && h>=a.s2.t && a.s2.t>KEY[Math.max(hi-1,0)]) return true; // newly validated
+  return a.id==='a1';                                      // keep the hero thread open
+}
+function tglAlert(id){userToggled[id]=!(id in userToggled ? userToggled[id] : true) ; if(!(id in userToggled))userToggled[id]=false; render();}
+function toggleAlert(id,cur){userToggled[id]=!cur;render();}
+function alertHTML(a){
+  const h=KEY[hi];
+  if(h<a.s1.t)return '';
+  if(sevFilter!=='all' && a.sev!==sevFilter) return '';
+  const open=isOpen(a,h);
+  const badge=a.sev==='down'?'<span class="badge down">DOWNGRADED</span>':(a.sev==='crit'?'<span class="badge crit">CRITICAL</span>':(a.sev==='med'?'<span class="badge med">MEDIUM</span>':'<span class="badge high">HIGH</span>'));
+  let body=`<div class="stage s1"><span class="sd"></span><div class="tx"><span class="st">STAGE 1 · EXPOSURE FACT - certain from metadata</span>${a.s1.tx}</div><span class="tm">${th(a.s1.t)}</span></div>`;
+  if(a.s2){
+    if(h>=a.s2.t){
+      body+=`<div class="stage s2"><span class="sd"></span><div class="tx"><span class="st">STAGE 2 · CONTENT FINDING - validated by sampling</span>${a.s2.tx}</div><span class="tm ttvr" title="${TTVRDEF}">${a.s2.ttvr}</span></div>`;
+    }else{
+      body+=`<div class="verifying"><span class="spin"></span>Confidence cycle running - sampling in progress, alert will update in place · ${a.eta}</div>`;
+    }
+  }
+  if(a.sg){
+    if(h>=a.sg.t){
+      body+=`<div class="stage sg"><span class="sd"></span><div class="tx"><span class="st">RESOLVED · BATCHED DOWNGRADE - reason attached</span>${a.sg.tx}</div><span class="tm">${th(a.sg.t)}</span></div>`;
+    }else{
+      body+=`<div class="verifying"><span class="spin"></span>Focus area prioritized - sampling in progress</div>`;
+    }
+  }
+  const cls=(a.sg&&h>=a.sg.t)?'down':a.sev;
+  return `<div class="alert ${cls}">
+    <div class="a-head" onclick="toggleAlert('${a.id}',${open})">
+      <span class="caret ${open?'open':''}">▶</span>
+      ${badge}${a.dc?`<span class="badge dc">${a.dc}</span>`:''}${a.explore?'<span class="badge exp">FOUND BY EXPLORATION</span>':''}${a.hyp?'<span class="badge exp">FOCUS AREA #3</span>':''}
+      <span class="a-title">${a.title}</span>
+      <span class="a-state">${alertState(a,h)}</span>
+    </div>
+    ${open?`<div class="a-body">${body}
+      <div class="a-foot">${a.ai?`<span class="aiflag">◈ ${a.ai}</span>`:''}<span class="env">${a.env}</span><button class="btn" onclick="bump('${a.title}')">Bump priority</button><button class="btn ghost" onclick="dism('${a.title}')">Dismiss</button></div>
+    </div>`:''}
+  </div>`;
+}
+function setSev(v){sevFilter=v;render();}
+function sevBarHTML(){
+  const opts=[['all','ALL',''],['crit','CRITICAL','c'],['high','HIGH','h'],['med','MEDIUM','m'],['down','DOWNGRADED','l']];
+  return `<div class="sevbar">${opts.map(o=>`<button class="sevbtn ${o[2]} ${sevFilter===o[0]?'on':''}" onclick="setSev('${o[0]}')">${o[1]}</button>`).join('')}</div>`;
+}
+function queueHTML(){
+  const h=KEY[hi];
+  const pchip=p=>p==='high'?'<span class="badge high">HIGH</span>':(p==='med'?'<span class="badge med">MED</span>':'<span class="badge" style="background:var(--panel3);color:var(--dim)">LOW</span>');
+  const rows=QUEUE.filter(q=>!(q.hideAfter&&h>=q.hideAfter)).map(q=>`
+   <div class="qrow">
+     <span class="qname">${q.n}${q.explore?' <span class="badge exp" style="margin-left:4px">EXPL</span>':''}</span>
+     ${pchip(q.ps)}
+     <span class="qexp">${q.exp}</span>
+     <div class="ci" title="P(sensitive): ${q.lo}–${q.hi}%"><i style="left:${q.lo}%;width:${q.hi-q.lo}%"></i></div>
+     <button class="qbtn" title="Bump priority" onclick="bump('${q.n}')">▲</button>
+     <button class="qbtn" title="Dismiss" onclick="dism('${q.n}')">✕</button>
+   </div>`).join('');
+  return `<div class="card"><h2>Sampling queue - next up</h2>
+    <div class="sub">Predicted severity + P(sensitive) as an honest interval - sharpens with every sample. Your actions re-steer the scheduler.</div>${rows}</div>`;
+}
+function analystHTML(){
+  const h=KEY[hi];
+  const feed=ALERTS.map(a=>alertHTML(a)).join('')||'<div class="empty"><b>No exposure facts yet.</b> Tier 0 triage running on 350,412 data stores - first facts expected within the hour.</div>';
+  return `
+   <div class="stack">
+     <div class="card">
+       <h2>Environment radar</h2>
+       <div class="sub">Sector = environment · radius = exposure (private core → public edge) · fuzzy = estimated · solid = validated · <span style="color:var(--violet)">violet ring = AI-reachable</span></div>
+       <div class="radar-wrap">${radarSVG(h)}</div>
+       <div class="legend">
+         <span><span class="sw fz"></span>estimated (Tier 0/1)</span>
+         <span><span class="sw sh"></span>validated</span>
+         <span><span class="sw ai"></span>AI-reachable</span>
+         <span><span class="sw dg"></span>downgraded</span>
+       </div>
+     </div>
+     <div class="card"><h2>Coverage × confidence</h2>
+       <div class="sub">Progress = % of data stores risk-assessed at each fidelity - not % scanned.</div>${coverageRows()}</div>
+   </div>
+   <div class="stack">
+     <div class="card" style="padding-bottom:8px">${metricsHTML()}</div>
+     <div class="card">
+       <h2>Dynamic alerts - two-stage</h2>
+       <div class="sub">Alerts update in place as confidence grows: Stage 1 pushes the certain exposure fact in minutes → confidence cycle (sampling) → Stage 2 re-validates the same thread with evidence + TTVR stamp (TTVR = time-to-validated-risk). Click a row to expand.</div>
+       ${sevBarHTML()}
+       ${feed}
+     </div>
+     ${queueHTML()}
+   </div>`;
+}
+
+/* ================= CISO (single column, low load) ================= */
+function tglSec(k){secOpen[k]=!secOpen[k];render();}
+function moreActions(){showAllActions=true;render();}
+function cisoHTML(){
+  const h=KEY[hi];
+  const decs=DECISIONS.filter(d=>h>=d.t);
+  const conf=HYPS.filter(x=>h>=x.res&&x.st==='conf').length, down=HYPS.filter(x=>h>=x.res&&x.st==='down').length;
+  const i=hi;
+  // day banner
+  const banner=`<div class="daybox">
+    <div class="dt">WHERE YOU STAND · ${th(KEY[hi])}</div>
+    <div class="dl"><b>${METRICS.validated[i]}</b> risks validated with evidence · <b>${decs.length}</b> recommended actions ready · your 5 focus areas: <b>${conf}</b> confirmed, <b>${down}</b> downgraded, ${5-conf-down} pending · <b>${METRICS.tier0[i]}%</b> of 350,412 data stores triaged</div>
+  </div>`;
+  // actions
+  const shown=showAllActions?decs:decs.slice(0,3);
+  const dhtml=decs.length?shown.map((d,ix)=>`
+    <div class="decision">
+      <div class="dhead"><span class="num">ACTION ${String(ix+1).padStart(2,'0')}</span><h3>${d.h}</h3></div>
+      <div class="ev">${d.ev}</div>
+      <div class="meta"><span class="ttvr" title="${TTVRDEF}">TTVR ${d.ttvr}</span><span class="blast">blast radius: ${d.blast}</span><span>evidence attached · snapshot-citable</span></div>
+    </div>`).join('')+(decs.length>3&&!showAllActions?`<button class="morebtn" onclick="moreActions()">Show all ${decs.length} recommended actions ▾</button>`:'')
+   :`<div class="empty"><b>No validated risks yet - triage in progress.</b><br>Tier 0 running across 350,412 data stores. Your 5 focus areas are queued for verification first. First exposure facts expected within the hour.</div>`;
+  // focus areas
+  const hyps=HYPS.map(hp=>{
+    const done=h>=hp.res;
+    const chip=done?(hp.st==='conf'?'<span class="hchip conf">CONFIRMED</span>':'<span class="hchip down">DOWNGRADED</span>'):'<span class="hchip pend">PENDING</span>';
+    return `<div class="hyp">${chip}<div class="ht">${hp.q}${done?`<small>${hp.ev}</small>`:'<small>Prioritized for early sampling</small>'}</div><span class="htm">${done?th(hp.res):'-'}</span></div>`;
+  }).join('');
+  // ttvr plot at H24
+  let plot='';
+  if(hi===KEY.length-1){
+    const pts=[0.78,4.92,6.67,7.5,14.08,2.3,3.1,3.4,5.6,9.2,11.5,16.4,18.2,21.5];
+    const dots=pts.map(t=>`<span class="pt ${t>8?'hi':''}" style="left:${t/24*100}%" title="${th(t)}"></span>`).join('');
+    plot=`<div class="card"><h2 title="${TTVRDEF}">TTVR distribution - day one</h2>
+      <div class="sub">14 validated risks, each stamped with its time-to-validated-risk. The day-one story is the distribution, not one anecdote.</div>
+      <div class="ttvr-plot">${dots}<span class="med" style="left:${3.2/24*100}%"></span><span class="medlb" style="left:${3.2/24*100}%">median 3:12</span></div>
+      <div class="ttvr-axis"><span>T+0</span><span>T+6</span><span>T+12</span><span>T+18</span><span>T+24</span></div></div>`;
+  }
+  return `
+   ${banner}
+   <div class="card" style="padding-bottom:8px">${metricsHTML()}</div>
+   <div class="card">
+     <h2>Recommended actions</h2>
+     <div class="sub">Risk Radar recommends - your team decides and executes. Each action carries evidence, blast radius, and its TTVR stamp (time-to-validated-risk).</div>
+     ${dhtml}
+     <div class="snapbar">
+       <button class="snapbtn" onclick="snap()">Freeze Day 1 Report</button>
+       <span class="snapnote">Frozen reports are citable &amp; reproducible - what you share today can't be contradicted by tomorrow's UI.</span>
+     </div>
+     <div class="snapbanner" id="snapB"></div>
+   </div>
+   <div class="card">
+     <div class="sechead" onclick="tglSec('focus')">
+       <span class="caret ${secOpen.focus?'open':''}">▶</span>
+       <h2>Focus areas</h2>
+       <span class="summ">${conf} confirmed · ${down} downgraded · ${5-conf-down} pending</span>
+     </div>
+     ${secOpen.focus?`<div class="secbody"><div class="sub">The concerns you flagged at onboarding - confirmed or downgraded with evidence. Never "cleared" from samples alone.</div>${hyps}</div>`:''}
+   </div>
+   <div class="card">
+     <div class="sechead" onclick="tglSec('coverage')">
+       <span class="caret ${secOpen.coverage?'open':''}">▶</span>
+       <h2>Coverage × confidence</h2>
+       <span class="summ">Tier 0: ${METRICS.tier0[i]}% · sampled: ${fm(METRICS.sampled[i])} stores</span>
+     </div>
+     ${secOpen.coverage?`<div class="secbody"><div class="sub">Progress = % of data stores risk-assessed at each fidelity - not % scanned.</div>${coverageRows()}</div>`:''}
+   </div>
+   ${plot}`;
+}
+
+/* ================= ACTIONS ================= */
+let toastT;
+function toast(html){
+  const t=document.getElementById('toast');
+  t.innerHTML=html;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function bump(n){toast(`<span class="tk">Priority bumped</span> - scheduler re-ranked. Sampling ETA for <b style="font-family:var(--mono)">${n}</b> moved to ~12 min.`)}
+function dism(n){toast(`<span class="tk">Dismissed</span> - ranking updated. This signal down-weights similar data stores across your environment.`)}
+function snap(){
+  const b=document.getElementById('snapB');
+  if(!b)return;
+  b.style.display='block';
+  b.textContent='◆ DAY 1 REPORT FROZEN - '+new Date().toISOString().slice(0,10)+' · T+'+KEY[hi]+':00 · id ss-'+Math.random().toString(36).slice(2,8)+' · citable & reproducible from the live dashboard';
+  toast('<span class="tk">Day 1 Report frozen.</span> Timestamped, citable, reproducible.');
+}
+function setView(v){
+  view=v;
+  document.getElementById('tabA').classList.toggle('on',v==='analyst');
+  document.getElementById('tabC').classList.toggle('on',v==='ciso');
+  render();
+}
+function render(){
+  paintTimeline();
+  const m=document.getElementById('main');
+  m.className='main'+(view==='ciso'?' solo':'');
+  m.innerHTML=view==='analyst'?analystHTML():cisoHTML();
+}
+buildTimeline();render();
+</script>
+</body>
+</html>
